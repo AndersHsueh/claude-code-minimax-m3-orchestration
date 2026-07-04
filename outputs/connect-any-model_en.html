@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give Claude Code a Second Brain — A No-Code Setup Guide</title>
+<style>
+  :root {
+    --bg: #F5F4EE;
+    --surface: #FFFFFF;
+    --surface-alt: #FAF9F5;
+    --ink: #1F1E1D;
+    --ink-soft: #6B6A63;
+    --accent: #D97757;
+    --accent-dark: #B35F42;
+    --accent-soft: #F3E3D8;
+    --border: #E7E4DA;
+    --code-bg: #1F1E1D;
+    --code-text: #F5F4EE;
+    --radius: 12px;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.75;
+    font-size: 17px;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 56px 24px 96px; }
+  header.hero { padding-bottom: 32px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+  .badge {
+    display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; padding: 5px 14px; border-radius:999px;
+    background: var(--accent-soft); color: var(--accent-dark); margin-bottom: 18px;
+  }
+  h1 { font-family: var(--serif); font-size: 2.5rem; line-height: 1.3; margin: 0 0 14px; color: var(--ink); }
+  .subtitle { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 60ch; }
+  h2 {
+    font-family: var(--serif); font-size: 1.65rem; margin-top: 60px; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 3px solid var(--accent); display:inline-block;
+  }
+  h3 { font-family: var(--serif); font-size: 1.2rem; margin-top: 30px; }
+  p { margin: 14px 0; }
+  a { color: var(--accent-dark); text-decoration: underline; text-decoration-color: var(--accent-soft); text-underline-offset: 3px; }
+  a:hover { color: var(--accent); }
+  strong { color: var(--ink); }
+
+  .card { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin: 20px 0; }
+  .card.alt { background: var(--surface-alt); }
+
+  .analogy {
+    border-left: 4px solid var(--accent); background: var(--accent-soft);
+    padding: 18px 22px; border-radius: 0 var(--radius) var(--radius) 0; margin: 22px 0; font-size: 0.98rem;
+  }
+  .analogy .who { font-weight:700; color: var(--accent-dark); }
+
+  .flow { display:flex; flex-direction:column; align-items:center; gap:6px; margin: 28px 0; }
+  .flow-box { width:100%; max-width:460px; background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding:18px 22px; text-align:center; }
+  .flow-box.alt { background: var(--accent-soft); border-color: var(--accent); }
+  .flow-label { font-weight:700; font-family: var(--serif); font-size: 1.05rem; }
+  .flow-desc { color: var(--ink-soft); font-size:0.92rem; margin-top:4px; }
+  .flow-arrow { color: var(--accent-dark); font-weight:600; font-size:0.92rem; margin: 2px 0; }
+
+  ol.steps { counter-reset: step; list-style:none; padding:0; margin: 24px 0; }
+  ol.steps > li {
+    counter-increment: step; position:relative; padding: 16px 20px 16px 58px; margin-bottom: 14px;
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+  }
+  ol.steps > li::before {
+    content: counter(step); position:absolute; left:16px; top:16px; width:28px; height:28px;
+    border-radius:50%; background: var(--accent); color:#fff; font-weight:700; font-size:0.9rem;
+    display:flex; align-items:center; justify-content:center; font-family: var(--sans);
+  }
+  ol.steps > li > strong { display:block; margin-bottom: 6px; font-size: 1.02rem; }
+
+  pre {
+    background: var(--code-bg); color: var(--code-text); padding: 20px 22px; border-radius: var(--radius);
+    overflow-x:auto; font-family: var(--mono); font-size: 0.86rem; line-height:1.6; position:relative; margin: 16px 0;
+  }
+  pre .tag {
+    position:absolute; top:10px; right:16px; font-size:0.68rem; opacity:.55;
+    text-transform:uppercase; letter-spacing:.06em; font-family: var(--sans);
+  }
+  code { font-family: var(--mono); background: var(--accent-soft); color: var(--accent-dark); padding: 1px 6px; border-radius: 4px; font-size:0.88em; }
+  pre code { background:none; color:inherit; padding:0; font-size:1em; }
+  .ph { color: #E8A87C; }
+
+  table { width:100%; border-collapse:collapse; margin:20px 0; }
+  th, td { text-align:left; padding: 10px 14px; border-bottom:1px solid var(--border); font-size:0.95rem; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:.03em; }
+
+  details { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 16px 22px; margin: 12px 0; }
+  summary { cursor:pointer; font-weight:700; }
+  details[open] summary { margin-bottom: 10px; }
+  details p:last-child { margin-bottom: 0; }
+
+  nav.toc { background: var(--surface-alt); border:1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; margin-bottom: 44px; }
+  nav.toc .toc-title { font-weight:700; margin-bottom: 10px; color: var(--ink-soft); font-size:0.8rem; text-transform:uppercase; letter-spacing:.05em; }
+  nav.toc a { display:block; padding: 5px 0; font-size: 0.98rem; }
+
+  dl.glossary dt { font-weight:700; margin-top:16px; font-family: var(--serif); font-size: 1.02rem; }
+  dl.glossary dd { margin:4px 0 0; color: var(--ink-soft); }
+
+  .callout {
+    display:flex; gap:14px; align-items:flex-start; background: var(--surface-alt);
+    border:1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin: 22px 0;
+  }
+  .callout .icon { font-size: 1.4rem; line-height:1; }
+  .callout.warn { background: #FDF3EC; border-color: var(--accent-soft); }
+
+  .agent-section { background: #FCFBF8; border:1px solid var(--border); border-radius: var(--radius); padding: 6px 30px 30px; margin-top: 20px; }
+  .agent-tag {
+    display:inline-flex; align-items:center; gap:8px; background: var(--ink); color: var(--code-text);
+    padding: 6px 16px; border-radius: 999px; font-size:0.85rem; font-weight:700; margin: 20px 0 6px;
+  }
+
+  footer { margin-top: 70px; padding-top: 26px; border-top:1px solid var(--border); color: var(--ink-soft); font-size:0.9rem; }
+  footer a { color: var(--ink-soft); }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .wrap { padding: 36px 16px 64px; }
+    ol.steps > li { padding-left: 50px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">Claude Code Dual-Model Orchestration · No-Code Guide</span>
+  <h1>Give Claude Code a Second Brain</h1>
+  <p class="subtitle">
+    A setup guide that doesn't require you to know how to code. Read the first half,
+    answer three questions, and let your AI assistant handle the rest by following this document.
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#why">1. What this is, and why it's worth doing</a>
+  <a href="#prepare">2. What you need before you start</a>
+  <a href="#start">3. How to get started</a>
+  <a href="#agent-steps">4. Exact steps for an AI Agent</a>
+  <a href="#faq">5. Frequently asked questions</a>
+  <a href="#glossary">6. Glossary</a>
+</nav>
+
+<section id="why">
+  <h2>1. What this is, and why it's worth doing</h2>
+  <p>
+    If you use Claude Code (or a similar AI coding/work assistant), you've probably noticed:
+    your usage quota is finite, and it runs out faster the more you use it. This document teaches you one thing —
+    hand off the "repetitive legwork" to a cheaper, essentially unlimited AI model, and reserve your most
+    capable, most expensive model for the parts that actually require judgment.
+  </p>
+
+  <div class="analogy">
+    <span class="who">An analogy:</span>
+    Imagine you've hired a brilliant, expensive senior architect. They're best at making decisions,
+    designing the plan, setting direction — things only they can do well. But if you have them
+    fix a typo, re-run a test, or reformat ten files, you're wasting their time and your money.
+    The smart move: let the architect make the calls, and hand the manual labor to a fast,
+    inexpensive crew. This document walks you through setting up exactly that "crew."
+  </div>
+
+  <div class="flow">
+    <div class="flow-box">
+      <div class="flow-label">Your strongest model (does the thinking)</div>
+      <div class="flow-desc">Figures out what needs to happen, breaks it into clear steps</div>
+    </div>
+    <div class="flow-arrow">↓ hands off the clearly-defined steps</div>
+    <div class="flow-box alt">
+      <div class="flow-label">The newly connected model (does the legwork)</div>
+      <div class="flow-desc">Repeatedly executes: reads/writes files, runs tests, fixes errors</div>
+    </div>
+  </div>
+
+  <p>
+    Once set up, you'll have a new command. Keep using Claude Code exactly as before — just switch
+    to this new command for the repetitive work, and your precious quota gets saved for the moments
+    that actually need real judgment.
+  </p>
+</section>
+
+<section id="prepare">
+  <h2>2. What you need before you start</h2>
+  <p>You need two things:</p>
+  <ol class="steps">
+    <li>
+      <strong>Claude Code, already installed</strong>
+      If you haven't installed it yet, complete the official installation steps first and confirm
+      that typing <code>claude</code> in your terminal opens it.
+    </li>
+    <li>
+      <strong>Access to a model service that's "Anthropic-protocol compatible"</strong>, plus the three
+      pieces of information listed below, obtained from that provider. "Anthropic-protocol compatible"
+      means the provider's API speaks the same "language" as Claude Code, so no extra translation layer
+      is needed. Many providers explicitly advertise this as "Anthropic API compatible" or
+      "Claude API compatible" in their docs — that's the phrase to look for.
+    </li>
+  </ol>
+
+  <table>
+    <tr><th>What you need</th><th>What it is (in plain terms)</th></tr>
+    <tr>
+      <td><strong>Base URL</strong></td>
+      <td>Think of it as a "headquarters address" — where on the internet the service you're connecting
+      to actually lives. It's typically a web address starting with <code>https://</code>, and your
+      provider's documentation will state it explicitly.</td>
+    </tr>
+    <tr>
+      <td><strong>API Key</strong><br>(token)</td>
+      <td>Think of it as your "membership card PIN" — proof that this is your account. Never show it
+      to anyone else, and never paste it anywhere public (a chat group, a public code repository, etc.).</td>
+    </tr>
+    <tr>
+      <td><strong>Model Name</strong></td>
+      <td>Think of it as "the exact dish name you order off the menu" — it tells the system which of
+      the provider's models to use. <strong>It must match your provider's documentation exactly</strong>,
+      including capitalization and any suffix (some providers use different name strings for a
+      "standard" vs. an "extended-context" variant of the same underlying model — get this wrong and
+      you may silently end up using a different variant than you intended).</td>
+    </tr>
+  </table>
+
+  <p>
+    If you don't have these three things yet, check your chosen provider's website — usually under
+    an "API," "Developers," or "Getting Started" section.
+  </p>
+</section>
+
+<section id="start">
+  <h2>3. How to get started</h2>
+  <p>
+    Point your AI assistant at this HTML file (for example, just say: <em>"Open this document and
+    follow the 'Exact steps for an AI Agent' section to set this up for me"</em>). It will ask you
+    for the three pieces of information above, then handle everything else automatically.
+  </p>
+  <div class="callout">
+    <span class="icon">💡</span>
+    <div>
+      Once set up, you'll have a new command (your assistant will tell you its exact name). To have
+      the newly connected model do work for you, type that command from any folder's terminal — it
+      works exactly like <code>claude</code> does today.
+    </div>
+  </div>
+  <p>If you don't currently have an AI assistant that can read files and operate your computer, hand the next section's steps to any friend who's mildly comfortable with a command line — following them line by line works just as well.</p>
+</section>
+
+<section id="agent-steps">
+  <span class="agent-tag">🤖 The section below is for AI Agents</span>
+  <h2>4. Exact steps for an AI Agent</h2>
+  <div class="agent-section">
+    <p>
+      If you're an AI agent reading this, someone wants your help connecting Claude Code to another
+      model. Follow the steps below in order. Anywhere you see a placeholder like
+      <code class="ph">{{like this}}</code>, substitute the real value before running the command.
+    </p>
+
+    <div class="callout warn">
+      <span class="icon">🔒</span>
+      <div>
+        <strong>Security note:</strong> the API Key is sensitive. When confirming it back to the user,
+        show only the first and last 4 characters (e.g. <code>sk-a1***********wxyz</code>). Never print
+        the full key into logs, chat transcripts, or any file that might get committed to a repository.
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <strong>Step 0 · Environment check</strong>
+        Confirm the <code>claude</code> command is installed. If not, stop and tell the user to
+        install Claude Code first.
+<pre><span class="tag">bash</span><code>command -v claude >/dev/null 2>&1 || echo "claude command not found — install Claude Code first"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 1 · Ask the user these three questions (verbatim)</strong>
+        <ul>
+          <li>"What's the Base URL? (Your provider's Anthropic-protocol-compatible endpoint, usually starts with https://)"</li>
+          <li>"What's the API Key? (The token your provider issued you)"</li>
+          <li>"What's the Model Name? (Must match your provider's documentation exactly, including case and any suffix)"</li>
+        </ul>
+      </li>
+
+      <li>
+        <strong>Step 2 · Derive a short alias</strong>
+        Turn model_name into a short, filesystem-safe alias: lowercase, replace every character that
+        isn't <code>a-z0-9</code> with a hyphen, collapse repeated hyphens, trim leading/trailing hyphens.
+<pre><span class="tag">bash</span><code>raw="<span class="ph">{{MODEL_NAME}}</span>"
+alias=$(echo "$raw" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')</code></pre>
+        If the result is empty or shorter than 2 characters (common when the model name is
+        non-ASCII or symbol-heavy), ask a follow-up question: "Could you give this configuration
+        a short nickname? e.g. minimax, kimi, zhipu."
+      </li>
+
+      <li>
+        <strong>Step 3 · Check for a name collision</strong>
+        Avoid silently overwriting an existing configuration.
+<pre><span class="tag">bash</span><code>test -f "$HOME/.claude/settings-<span class="ph">{{ALIAS}}</span>.json" && echo "A config with this alias already exists — ask the user whether to overwrite or pick a different alias"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 4 · Create the settings file</strong>
+        Create the directory, then write <code>~/.claude/settings-<span class="ph">{{ALIAS}}</span>.json</code>:
+<pre><span class="tag">bash</span><code>mkdir -p "$HOME/.claude"</code></pre>
+        File contents (substitute the <code class="ph">{{...}}</code> placeholders):
+<pre><span class="tag">json</span><code>{
+  "env": {
+    "ANTHROPIC_BASE_URL": "<span class="ph">{{BASE_URL}}</span>",
+    "ANTHROPIC_AUTH_TOKEN": "<span class="ph">{{API_KEY}}</span>",
+    "ANTHROPIC_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "API_TIMEOUT_MS": "1200000"
+  }
+}</code></pre>
+        Why both <code>ANTHROPIC_MODEL</code> and the three <code>ANTHROPIC_DEFAULT_*_MODEL</code>
+        fields: different Claude Code versions read slightly different fields, so setting all four
+        maximizes compatibility — this combination has been tested and doesn't conflict.
+        <code>API_TIMEOUT_MS</code> is set much higher than the default because third-party model
+        endpoints can have a noticeably slow first response (one real test hit nearly three minutes).
+      </li>
+
+      <li>
+        <strong>Step 5 · Create the executable wrapper</strong>
+        <strong>Do not use a shell alias for this.</strong> AI coding assistants typically run commands
+        in a non-interactive, non-login shell that never sources <code>.zshrc</code> / <code>.bashrc</code>,
+        so aliases silently won't exist. It has to be a real executable file.
+<pre><span class="tag">bash</span><code>mkdir -p "$HOME/bin"</code></pre>
+        File contents, written to <code>~/bin/claude-<span class="ph">{{ALIAS}}</span></code>:
+<pre><span class="tag">bash</span><code>#!/bin/bash
+exec claude --settings "$HOME/.claude/settings-<span class="ph">{{ALIAS}}</span>.json" "$@"</code></pre>
+        Make it executable:
+<pre><span class="tag">bash</span><code>chmod +x "$HOME/bin/claude-<span class="ph">{{ALIAS}}</span>"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 6 · Confirm ~/bin is on PATH</strong>
+<pre><span class="tag">bash</span><code>echo "$PATH" | tr ':' '\n' | grep -qx "$HOME/bin" && echo OK || echo MISSING</code></pre>
+        If it prints <code>MISSING</code>: check <code>$SHELL</code> to determine zsh vs. bash, append
+        the following line to the corresponding <code>~/.zshrc</code> or <code>~/.bashrc</code>, and tell
+        the user to restart their terminal or run <code>source</code> manually:
+<pre><span class="tag">bash</span><code>export PATH="$HOME/bin:$PATH"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 7 · Verify with test 1: text dialogue</strong>
+<pre><span class="tag">bash</span><code>claude-<span class="ph">{{ALIAS}}</span> -p "introduce yourself in one sentence" --output-format json</code></pre>
+        Check the returned JSON: <code>"is_error"</code> should be <code>false</code> and
+        <code>"result"</code> should be non-empty. If PATH hasn't refreshed yet in this shell,
+        use the full path <code>~/bin/claude-<span class="ph">{{ALIAS}}</span></code> instead.
+      </li>
+
+      <li>
+        <strong>Step 8 · Verify with test 2: tool calling (the critical step)</strong>
+        Run this in a scratch directory, and always include <code>--allowedTools</code> — without it,
+        tool calls will hang waiting for a permission prompt that non-interactive mode can never answer.
+<pre><span class="tag">bash</span><code>mkdir -p /tmp/model-bridge-test && cd /tmp/model-bridge-test
+claude-<span class="ph">{{ALIAS}}</span> -p "create a file named hello.txt in the current directory with the content hello" \
+  --allowedTools "Write" --output-format json</code></pre>
+        <strong>Don't just trust the model's self-reported success</strong> — independently check that
+        the file actually exists with the right content, and confirm <code>"permission_denials"</code>
+        in the JSON is an empty array.
+      </li>
+
+      <li>
+        <strong>Step 9 · Report back to the user</strong>
+        If steps 7 and 8 both pass, tell the user in plain language that setup succeeded, that they
+        can now run <code>claude-<span class="ph">{{ALIAS}}</span> "whatever they want done"</code> from
+        any folder, and remind them that any future automated (non-interactive) use needs
+        <code>--allowedTools</code> or it will hang.
+      </li>
+    </ol>
+
+    <h3>If a test fails, check in this order</h3>
+    <table>
+      <tr><th>Symptom</th><th>Check first</th></tr>
+      <tr><td>Immediate connection error</td><td>Is the Base URL correct and reachable? (try <code>curl</code> against it directly)</td></tr>
+      <tr><td>401 / 403 / unauthorized</td><td>Was the API Key copied completely, with no stray whitespace or line breaks?</td></tr>
+      <tr><td>Model not found</td><td>Does the Model Name match the provider's docs exactly — case and suffix included?</td></tr>
+      <tr><td>Tool calls hang / nothing happens</td><td>Is <code>--allowedTools</code> missing from the command?</td></tr>
+      <tr><td>Response is very slow</td><td>Retry once — a slow first call to a third-party endpoint is a known, benign occurrence, not necessarily a misconfiguration</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="faq">
+  <h2>5. Frequently asked questions</h2>
+
+  <details>
+    <summary>Is this safe? Could my API key leak?</summary>
+    <p>
+      The settings file lives on your own machine, under <code>~/.claude/</code>, and is never
+      automatically uploaded anywhere. The one thing to watch for yourself: don't paste this file
+      or its contents into a chat, or commit it to a public code repository. If a key does leak,
+      go to your provider's dashboard, revoke it, and issue a new one.
+    </p>
+  </details>
+
+  <details>
+    <summary>Will this new command conflict with my existing <code>claude</code> command?</summary>
+    <p>
+      No. <code>claude</code> stays exactly as it was. The new command (e.g. <code>claude-minimax</code>)
+      is entirely separate — the two don't interfere, and you can switch between them freely.
+    </p>
+  </details>
+
+  <details>
+    <summary>Why is it sometimes slow?</summary>
+    <p>
+      Response times vary a lot between third-party model providers, especially on the very first
+      call (which can occasionally take a minute or two). That doesn't necessarily mean something's
+      misconfigured — try again, or on a different network.
+    </p>
+  </details>
+
+  <details>
+    <summary>Can I connect more than one model provider?</summary>
+    <p>
+      Yes. Repeat the steps in Section 4 for each one, choosing a different alias each time
+      (e.g. <code>claude-minimax</code>, <code>claude-kimi</code>) — each setup is independent
+      and they won't interfere with each other.
+    </p>
+  </details>
+
+  <details>
+    <summary>I'd rather not have an AI agent do this automatically — can I do it by hand?</summary>
+    <p>
+      Absolutely. Every step in Section 4 is fundamentally "make a folder," "write a file," or
+      "change a permission" — simple enough that even without a technical background, you can type
+      the commands into a terminal yourself, one line at a time.
+    </p>
+  </details>
+</section>
+
+<section id="glossary">
+  <h2>6. Glossary</h2>
+  <dl class="glossary">
+    <dt>API</dt>
+    <dd>A set of agreed-upon rules that let two pieces of software talk to each other. You don't
+    need to know the details — just that it's the interface two programs use to communicate.</dd>
+
+    <dt>Base URL</dt>
+    <dd>The "street address," on the internet, of the service you're connecting to — usually a web address.</dd>
+
+    <dt>API Key (token)</dt>
+    <dd>A string of characters that proves "this is your account," functioning like a password.
+    Never share it.</dd>
+
+    <dt>Environment variable</dt>
+    <dd>A configuration value a program reads on startup. The settings file in this guide is,
+    at its core, a pre-written batch of these.</dd>
+
+    <dt>Permission prompt</dt>
+    <dd>The confirmation dialog an AI assistant shows before performing an action (like editing
+    a file), asking "is this OK?" In unattended/automated scenarios, you must explicitly declare
+    upfront which actions are allowed, or the program will sit stuck waiting for a click that
+    never comes.</dd>
+
+    <dt>Anthropic-protocol compatible</dt>
+    <dd>Describes a model provider whose API is shaped exactly like Anthropic's (Claude's maker),
+    so Claude Code can talk to it directly with no extra "translation layer" needed.</dd>
+  </dl>
+</section>
+
+<footer>
+  <p>
+    This method has been verified end-to-end against a real MiniMax M3 deployment — protocol
+    compatibility, reliable tool calling, and a real bug-fix task all passed. Full test records,
+    lessons learned, and additional (Chinese-language) documentation live in the open-source repo:
+    <a href="https://github.com/AndersHsueh/claude-code-minimax-m3-orchestration" target="_blank" rel="noopener">
+      github.com/AndersHsueh/claude-code-minimax-m3-orchestration
+    </a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

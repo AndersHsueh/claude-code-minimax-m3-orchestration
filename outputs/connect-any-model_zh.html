@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>给 Claude Code 接上另一个大脑 — 零代码接入指南</title>
+<style>
+  :root {
+    --bg: #F5F4EE;
+    --surface: #FFFFFF;
+    --surface-alt: #FAF9F5;
+    --ink: #1F1E1D;
+    --ink-soft: #6B6A63;
+    --accent: #D97757;
+    --accent-dark: #B35F42;
+    --accent-soft: #F3E3D8;
+    --border: #E7E4DA;
+    --code-bg: #1F1E1D;
+    --code-text: #F5F4EE;
+    --radius: 12px;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.75;
+    font-size: 17px;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 56px 24px 96px; }
+  header.hero { padding-bottom: 32px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+  .badge {
+    display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; padding: 5px 14px; border-radius:999px;
+    background: var(--accent-soft); color: var(--accent-dark); margin-bottom: 18px;
+  }
+  h1 { font-family: var(--serif); font-size: 2.5rem; line-height: 1.3; margin: 0 0 14px; color: var(--ink); }
+  .subtitle { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 60ch; }
+  h2 {
+    font-family: var(--serif); font-size: 1.65rem; margin-top: 60px; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 3px solid var(--accent); display:inline-block;
+  }
+  h3 { font-family: var(--serif); font-size: 1.2rem; margin-top: 30px; }
+  p { margin: 14px 0; }
+  a { color: var(--accent-dark); text-decoration: underline; text-decoration-color: var(--accent-soft); text-underline-offset: 3px; }
+  a:hover { color: var(--accent); }
+  strong { color: var(--ink); }
+
+  .card { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin: 20px 0; }
+  .card.alt { background: var(--surface-alt); }
+
+  .analogy {
+    border-left: 4px solid var(--accent); background: var(--accent-soft);
+    padding: 18px 22px; border-radius: 0 var(--radius) var(--radius) 0; margin: 22px 0; font-size: 0.98rem;
+  }
+  .analogy .who { font-weight:700; color: var(--accent-dark); }
+
+  .flow { display:flex; flex-direction:column; align-items:center; gap:6px; margin: 28px 0; }
+  .flow-box { width:100%; max-width:460px; background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding:18px 22px; text-align:center; }
+  .flow-box.alt { background: var(--accent-soft); border-color: var(--accent); }
+  .flow-label { font-weight:700; font-family: var(--serif); font-size: 1.05rem; }
+  .flow-desc { color: var(--ink-soft); font-size:0.92rem; margin-top:4px; }
+  .flow-arrow { color: var(--accent-dark); font-weight:600; font-size:0.92rem; margin: 2px 0; }
+
+  ol.steps { counter-reset: step; list-style:none; padding:0; margin: 24px 0; }
+  ol.steps > li {
+    counter-increment: step; position:relative; padding: 16px 20px 16px 58px; margin-bottom: 14px;
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+  }
+  ol.steps > li::before {
+    content: counter(step); position:absolute; left:16px; top:16px; width:28px; height:28px;
+    border-radius:50%; background: var(--accent); color:#fff; font-weight:700; font-size:0.9rem;
+    display:flex; align-items:center; justify-content:center; font-family: var(--sans);
+  }
+  ol.steps > li > strong { display:block; margin-bottom: 6px; font-size: 1.02rem; }
+
+  pre {
+    background: var(--code-bg); color: var(--code-text); padding: 20px 22px; border-radius: var(--radius);
+    overflow-x:auto; font-family: var(--mono); font-size: 0.86rem; line-height:1.6; position:relative; margin: 16px 0;
+  }
+  pre .tag {
+    position:absolute; top:10px; right:16px; font-size:0.68rem; opacity:.55;
+    text-transform:uppercase; letter-spacing:.06em; font-family: var(--sans);
+  }
+  code { font-family: var(--mono); background: var(--accent-soft); color: var(--accent-dark); padding: 1px 6px; border-radius: 4px; font-size:0.88em; }
+  pre code { background:none; color:inherit; padding:0; font-size:1em; }
+  .ph { color: #E8A87C; }
+
+  table { width:100%; border-collapse:collapse; margin:20px 0; }
+  th, td { text-align:left; padding: 10px 14px; border-bottom:1px solid var(--border); font-size:0.95rem; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:.03em; }
+
+  details { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 16px 22px; margin: 12px 0; }
+  summary { cursor:pointer; font-weight:700; }
+  details[open] summary { margin-bottom: 10px; }
+  details p:last-child { margin-bottom: 0; }
+
+  nav.toc { background: var(--surface-alt); border:1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; margin-bottom: 44px; }
+  nav.toc .toc-title { font-weight:700; margin-bottom: 10px; color: var(--ink-soft); font-size:0.8rem; text-transform:uppercase; letter-spacing:.05em; }
+  nav.toc a { display:block; padding: 5px 0; font-size: 0.98rem; }
+
+  dl.glossary dt { font-weight:700; margin-top:16px; font-family: var(--serif); font-size: 1.02rem; }
+  dl.glossary dd { margin:4px 0 0; color: var(--ink-soft); }
+
+  .callout {
+    display:flex; gap:14px; align-items:flex-start; background: var(--surface-alt);
+    border:1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin: 22px 0;
+  }
+  .callout .icon { font-size: 1.4rem; line-height:1; }
+  .callout.warn { background: #FDF3EC; border-color: var(--accent-soft); }
+
+  .agent-section { background: #FCFBF8; border:1px solid var(--border); border-radius: var(--radius); padding: 6px 30px 30px; margin-top: 20px; }
+  .agent-tag {
+    display:inline-flex; align-items:center; gap:8px; background: var(--ink); color: var(--code-text);
+    padding: 6px 16px; border-radius: 999px; font-size:0.85rem; font-weight:700; margin: 20px 0 6px;
+  }
+
+  footer { margin-top: 70px; padding-top: 26px; border-top:1px solid var(--border); color: var(--ink-soft); font-size:0.9rem; }
+  footer a { color: var(--ink-soft); }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .wrap { padding: 36px 16px 64px; }
+    ol.steps > li { padding-left: 50px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">Claude Code 双模型编排 · 零代码指南</span>
+  <h1>给 Claude Code 接上另一个大脑</h1>
+  <p class="subtitle">
+    一份不需要你懂技术的配置说明。你只需要看完前半段、回答三个问题,
+    剩下的事交给你的 AI 助手照着这份文档去做就行。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">目录</div>
+  <a href="#why">1. 这是什么,为什么值得做</a>
+  <a href="#prepare">2. 开始之前,你需要准备什么</a>
+  <a href="#start">3. 怎么开始</a>
+  <a href="#agent-steps">4. 给 AI Agent 的精确操作步骤</a>
+  <a href="#faq">5. 常见问题</a>
+  <a href="#glossary">6. 术语表</a>
+</nav>
+
+<section id="why">
+  <h2>1. 这是什么,为什么值得做</h2>
+  <p>
+    如果你在用 Claude Code(或者其它类似的 AI 编程 / 办公助手),你可能已经发现:好用的额度是有限的,
+    用得越勤,越快见底。这份文档要教你一件事——把"重复跑腿"的活儿,交给另一个更便宜、几乎不限量的
+    AI 模型去干,而把"动脑子拿主意"的部分,留给你最贵、最强的那个模型。
+  </p>
+
+  <div class="analogy">
+    <span class="who">打个比方:</span>
+    想象你请了一位很厉害、但收费很贵的总监。总监最擅长的是拿主意、想方案、看方向——这些事只有他能做好。
+    但如果让总监去做"改一个错别字""重新跑一遍测试""把这十份文件都调一下格式"这种重复劳动,
+    就是在浪费他的时间,也是在浪费你的钱。聪明的做法是:总监只管拍板,把体力活交给一位手脚麻利、
+    收费便宜的助理去执行。这份文档要帮你搭的,就是这样一位"助理"。
+  </div>
+
+  <div class="flow">
+    <div class="flow-box">
+      <div class="flow-label">强模型(负责动脑子)</div>
+      <div class="flow-desc">想清楚要做什么、拆解成明确的步骤</div>
+    </div>
+    <div class="flow-arrow">↓ 把想清楚的步骤交出去</div>
+    <div class="flow-box alt">
+      <div class="flow-label">新接入的模型(负责跑腿)</div>
+      <div class="flow-desc">反复执行、读写文件、跑测试、改错误</div>
+    </div>
+  </div>
+
+  <p>
+    搭好之后,你会多出一个新命令。你平时该怎么用 Claude Code 还怎么用;只是遇到那些"重复劳动"的活,
+    可以顺手改叫这个新命令去做,原来那份宝贵的额度就能省下来,留给真正需要动脑子的时刻。
+  </p>
+</section>
+
+<section id="prepare">
+  <h2>2. 开始之前,你需要准备什么</h2>
+  <p>你需要两样东西:</p>
+  <ol class="steps">
+    <li>
+      <strong>已经装好的 Claude Code</strong>
+      如果还没装,先去完成官方的安装步骤,确认在终端里输入 <code>claude</code> 能正常打开。
+    </li>
+    <li>
+      <strong>一个"跟 Anthropic 协议兼容"的模型服务</strong>,并且已经从这个服务商那里拿到下面三样东西。
+      "Anthropic 协议兼容"的意思是:这家服务商的接口,说的是跟 Claude Code 一样的"语言",
+      不需要额外的转换工具就能直接对接。很多模型服务商会在自己的文档里写明"兼容 Anthropic API"
+      或"兼容 Claude API"字样,可以以此判断。
+    </li>
+  </ol>
+
+  <table>
+    <tr><th>你需要拿到的信息</th><th>它是什么(打个比方)</th></tr>
+    <tr>
+      <td><strong>Base URL</strong><br>(服务地址)</td>
+      <td>相当于"总部地址"——你要连接的这个服务在网络上的哪个位置。通常是一个以 <code>https://</code> 开头的网址,服务商文档里会明确写出来。</td>
+    </tr>
+    <tr>
+      <td><strong>API Key</strong><br>(密钥 / 令牌)</td>
+      <td>相当于"会员卡密码"——证明"这是你的账号",不能给别人看到,更不能发到公开的地方(比如发到聊天群、贴到网上代码仓库里)。</td>
+    </tr>
+    <tr>
+      <td><strong>Model Name</strong><br>(模型名称)</td>
+      <td>相当于"点菜时报的菜名"——告诉系统你要用这家服务商的哪一款模型。<strong>必须跟服务商文档里写的一模一样</strong>,包括大小写和任何后缀(有些服务商同一个模型会有"标准版"和"加长上下文版"两种名字,写错了可能用到跟你以为的不一样的版本)。</td>
+    </tr>
+  </table>
+
+  <p>
+    如果你还没有这三样东西,去你选定的模型服务商的官网找一找,通常在"API"、"开发者中心"或
+    "接入指南"这类页面能找到申请入口和文档。
+  </p>
+</section>
+
+<section id="start">
+  <h2>3. 怎么开始</h2>
+  <p>
+    把这份 HTML 文件的路径告诉你正在用的 AI 助手(比如可以直接说:<em>"请打开这份文档,
+    照着里面'给 AI Agent 的精确操作步骤'那一节,帮我配置好"</em>)。它会主动向你确认上面那三个信息,
+    然后自动帮你把剩下的事情都搭好。
+  </p>
+  <div class="callout">
+    <span class="icon">💡</span>
+    <div>
+      搭好之后,你会得到一个新命令(它会告诉你具体叫什么名字)。以后想让这个新模型帮你干活,
+      在任意一个文件夹的终端里输入这个命令就行,用法跟平时用 <code>claude</code> 完全一样。
+    </div>
+  </div>
+  <p>如果你身边暂时没有能读文件、能操作电脑的 AI 助手,也可以把下一节的步骤原样交给任何一位懂一点点命令行的朋友,照着做一样能配置成功。</p>
+</section>
+
+<section id="agent-steps">
+  <span class="agent-tag">🤖 以下内容是给 AI Agent 看的</span>
+  <h2>4. 给 AI Agent 的精确操作步骤</h2>
+  <div class="agent-section">
+    <p>
+      你正在读这份文档,说明有人希望你帮他把 Claude Code 接入另一个模型。请严格按照下面的顺序执行。
+      代码块里凡是写成 <code class="ph">{{像这样}}</code> 的部分,都是占位符,执行前请替换成真实值。
+    </p>
+
+    <div class="callout warn">
+      <span class="icon">🔒</span>
+      <div>
+        <strong>安全提醒:</strong> API Key 是敏感信息。确认信息时只回显前 4 位和后 4 位(例如
+        <code>sk-a1***********wxyz</code>),不要把完整密钥打印在你会长期保留的日志、聊天记录或任何会被提交到代码仓库的文件里。
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <strong>Step 0 · 环境检查</strong>
+        确认 <code>claude</code> 命令已安装。如果没有,停下来告诉用户先安装 Claude Code。
+<pre><span class="tag">bash</span><code>command -v claude >/dev/null 2>&1 || echo "未检测到 claude 命令,请先安装 Claude Code"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 1 · 向用户提出下面三个问题(逐字使用)</strong>
+        <ul>
+          <li>"Base URL 是什么?(服务商提供的、跟 Anthropic 协议兼容的服务地址,通常以 https:// 开头)"</li>
+          <li>"API Key 是什么?(服务商发给你的密钥/令牌)"</li>
+          <li>"Model Name 是什么?(你要使用的模型名称,必须跟服务商文档里写的完全一致,包括大小写和任何后缀)"</li>
+        </ul>
+      </li>
+
+      <li>
+        <strong>Step 2 · 生成一个简短别名(alias)</strong>
+        用 model_name 生成一个用于文件命名的短别名:转小写、把所有非
+        <code>a-z0-9</code> 的字符换成短横线、合并连续短横线、掐头去尾。
+<pre><span class="tag">bash</span><code>raw="<span class="ph">{{MODEL_NAME}}</span>"
+alias=$(echo "$raw" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')</code></pre>
+        如果生成结果为空或短于 2 个字符(常见于模型名是纯中文或特殊符号的情况),
+        追加一个问题:"能否给这个配置起一个简短的英文别名?比如 minimax、kimi、zhipu"。
+      </li>
+
+      <li>
+        <strong>Step 3 · 检查是否已存在同名配置</strong>
+        避免覆盖用户已有的配置。
+<pre><span class="tag">bash</span><code>test -f "$HOME/.claude/settings-<span class="ph">{{ALIAS}}</span>.json" && echo "已存在同名配置,询问用户是否覆盖或换个别名"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 4 · 创建配置文件</strong>
+        新建目录并写入 <code>~/.claude/settings-<span class="ph">{{ALIAS}}</span>.json</code>:
+<pre><span class="tag">bash</span><code>mkdir -p "$HOME/.claude"</code></pre>
+        文件内容(把 <code class="ph">{{...}}</code> 换成真实值):
+<pre><span class="tag">json</span><code>{
+  "env": {
+    "ANTHROPIC_BASE_URL": "<span class="ph">{{BASE_URL}}</span>",
+    "ANTHROPIC_AUTH_TOKEN": "<span class="ph">{{API_KEY}}</span>",
+    "ANTHROPIC_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "<span class="ph">{{MODEL_NAME}}</span>",
+    "API_TIMEOUT_MS": "1200000"
+  }
+}</code></pre>
+        为什么同时写了 <code>ANTHROPIC_MODEL</code> 和三个 <code>ANTHROPIC_DEFAULT_*_MODEL</code>:
+        不同版本的 Claude Code 读取的字段可能不完全一样,四个都写上能保证兼容性,已实测两者同时存在不会冲突。
+        <code>API_TIMEOUT_MS</code> 设置得比默认值宽松很多,因为第三方模型服务的首次响应有时会明显偏慢(实测中遇到过接近三分钟的情况)。
+      </li>
+
+      <li>
+        <strong>Step 5 · 创建可执行脚本</strong>
+        <strong>不要用 shell 的 alias 来做这件事</strong>——AI 编程助手执行命令时,通常启动的是
+        非交互、非登录的子 shell,不会加载 <code>.zshrc</code> / <code>.bashrc</code>,alias 不会生效。
+        必须建一个真正的可执行文件。
+<pre><span class="tag">bash</span><code>mkdir -p "$HOME/bin"</code></pre>
+        文件内容,写入 <code>~/bin/claude-<span class="ph">{{ALIAS}}</span></code>:
+<pre><span class="tag">bash</span><code>#!/bin/bash
+exec claude --settings "$HOME/.claude/settings-<span class="ph">{{ALIAS}}</span>.json" "$@"</code></pre>
+        赋予执行权限:
+<pre><span class="tag">bash</span><code>chmod +x "$HOME/bin/claude-<span class="ph">{{ALIAS}}</span>"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 6 · 确认 ~/bin 在 PATH 里</strong>
+<pre><span class="tag">bash</span><code>echo "$PATH" | tr ':' '\n' | grep -qx "$HOME/bin" && echo OK || echo MISSING</code></pre>
+        如果输出 <code>MISSING</code>:根据 <code>$SHELL</code> 判断用户用的是 zsh 还是 bash,
+        把下面这行追加到对应的 <code>~/.zshrc</code> 或 <code>~/.bashrc</code>,并提醒用户重启终端或手动
+        <code>source</code> 一下:
+<pre><span class="tag">bash</span><code>export PATH="$HOME/bin:$PATH"</code></pre>
+      </li>
+
+      <li>
+        <strong>Step 7 · 验证测试 1:文本对话</strong>
+<pre><span class="tag">bash</span><code>claude-<span class="ph">{{ALIAS}}</span> -p "请用一句话介绍你自己" --output-format json</code></pre>
+        检查返回的 JSON:<code>"is_error"</code> 应为 <code>false</code>,<code>"result"</code> 字段应有内容。
+        如果 PATH 还没刷新,改用完整路径 <code>~/bin/claude-<span class="ph">{{ALIAS}}</span></code> 测试。
+      </li>
+
+      <li>
+        <strong>Step 8 · 验证测试 2:工具调用(关键一步)</strong>
+        在一个临时目录里测试,并且必须带 <code>--allowedTools</code>——否则在非交互模式下,
+        工具调用会因为等待人工确认权限而卡死(没有人能在非交互模式下点"允许")。
+<pre><span class="tag">bash</span><code>mkdir -p /tmp/model-bridge-test && cd /tmp/model-bridge-test
+claude-<span class="ph">{{ALIAS}}</span> -p "在当前目录创建一个 hello.txt 文件,内容写 hello" \
+  --allowedTools "Write" --output-format json</code></pre>
+        <strong>不要只看 JSON 里的自我报告</strong>——独立检查文件是否真的被创建、内容是否正确,
+        并确认 JSON 里 <code>"permission_denials"</code> 是空数组。
+      </li>
+
+      <li>
+        <strong>Step 9 · 向用户汇报</strong>
+        如果 Step 7、8 都通过,用大白话告诉用户:配置成功了,以后在任何文件夹输入
+        <code>claude-<span class="ph">{{ALIAS}}</span> "你想让它做的事"</code>
+        就能用这个新模型干活;并提醒用户以后凡是让它自动执行任务(不是打字聊天),都要带上
+        <code>--allowedTools</code>,否则会卡住。
+      </li>
+    </ol>
+
+    <h3>如果测试失败,按这个顺序排查</h3>
+    <table>
+      <tr><th>现象</th><th>先检查</th></tr>
+      <tr><td>命令直接报错、连不上</td><td>Base URL 是否正确、是否能被访问到(可以先用 <code>curl</code> 单独测一下这个地址)</td></tr>
+      <tr><td>报错提示未授权 / 401 / 403</td><td>API Key 是否复制完整、有没有多余的空格或换行</td></tr>
+      <tr><td>报错提示找不到模型 / 模型不存在</td><td>Model Name 是否跟服务商文档里的拼写完全一致(大小写、后缀都要对)</td></tr>
+      <tr><td>工具调用没反应、卡住不动</td><td>是否漏了 <code>--allowedTools</code> 参数</td></tr>
+      <tr><td>响应特别慢</td><td>先重试一次——第三方模型服务的首次调用有时会明显偏慢,属于已知现象,不代表配置错误</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="faq">
+  <h2>5. 常见问题</h2>
+
+  <details>
+    <summary>这样安全吗?我的密钥会不会泄露?</summary>
+    <p>
+      配置文件保存在你自己电脑的 <code>~/.claude/</code> 目录下,不会自动上传到任何地方。
+      唯一需要你自己注意的是:不要把这个配置文件、或者里面的密钥,复制粘贴发到聊天群、
+      贴到公开的代码仓库(比如 GitHub)里。如果不小心泄露了,去服务商的后台把这个密钥
+      "重置"或"作废"掉,重新申请一个就行。
+    </p>
+  </details>
+
+  <details>
+    <summary>这个新命令会不会跟我原来用的 <code>claude</code> 冲突?</summary>
+    <p>
+      不会。<code>claude</code> 还是原来那个 <code>claude</code>,新建的是一个完全独立的新命令
+      (比如 <code>claude-minimax</code>),两个互不影响,你可以随时切换着用。
+    </p>
+  </details>
+
+  <details>
+    <summary>为什么有时候反应很慢?</summary>
+    <p>
+      不同的第三方模型服务,响应速度差别很大,尤其是第一次调用(可能要等上一两分钟)。
+      这不代表配置出错了,多等一下,或者换个网络环境再试。
+    </p>
+  </details>
+
+  <details>
+    <summary>我可以同时配置好几个不同的模型服务吗?</summary>
+    <p>
+      可以。每配置一个,就是重复一遍第 4 节的步骤,取一个不一样的别名(比如
+      <code>claude-minimax</code>、<code>claude-kimi</code>),它们会各自独立,互不影响。
+    </p>
+  </details>
+
+  <details>
+    <summary>如果我不放心 AI Agent 自动帮我配置,可以自己动手吗?</summary>
+    <p>
+      当然可以。第 4 节里的每一条,本质上都是"新建一个文件夹""写一个文件""改一下权限"这类
+      简单操作,即使不太懂技术,照着步骤在终端里一行一行输入命令,也能自己完成。
+    </p>
+  </details>
+</section>
+
+<section id="glossary">
+  <h2>6. 术语表</h2>
+  <dl class="glossary">
+    <dt>API</dt>
+    <dd>软件之间互相"打电话"沟通用的一套约定好的规则,你不需要懂细节,只需要知道它是让两个程序对话的接口。</dd>
+
+    <dt>Base URL(服务地址)</dt>
+    <dd>你要连接的服务在网络上的"门牌号",通常是一个网址。</dd>
+
+    <dt>API Key(密钥 / 令牌)</dt>
+    <dd>证明"这是你本人账号"的一串字符,作用类似密码,不能给别人看。</dd>
+
+    <dt>环境变量</dt>
+    <dd>程序启动时可以读取的一些"设置项",这份文档里的配置文件本质上就是在预先写好一批环境变量。</dd>
+
+    <dt>权限确认框</dt>
+    <dd>AI 助手想要执行某个操作(比如改文件)时,弹出来问你"是否允许"的提示框。在自动化、
+    不盯着屏幕的场景下,必须提前用参数说明"这些操作都允许",否则程序会一直卡在这一步等你点确认。</dd>
+
+    <dt>Anthropic 协议兼容</dt>
+    <dd>指某个模型服务商,把自己的接口设计成跟 Anthropic(Claude 的开发商)完全一样的格式,
+    这样 Claude Code 就能直接跟它对话,不需要额外的"翻译层"。</dd>
+  </dl>
+</section>
+
+<footer>
+  <p>
+    这套方法已经用 MiniMax M3 做过真实的端到端测试(协议兼容性、工具调用可靠性、
+    真实 bug 修复场景全部验证通过)。完整的测试记录、踩过的坑、和更详细的中文说明,
+    收录在开源仓库:
+    <a href="https://github.com/AndersHsueh/claude-code-minimax-m3-orchestration" target="_blank" rel="noopener">
+      github.com/AndersHsueh/claude-code-minimax-m3-orchestration
+    </a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

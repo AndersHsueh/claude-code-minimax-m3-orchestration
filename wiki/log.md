@@ -65,3 +65,7 @@ grep "raw/<文件名>" wiki/log.md
 ## [2026-07-04] deliverable | 发布为公开 GitHub 仓库
 
 用户决定把本方案分享给更多人。新增根目录 `README.md`(英文,面向国际读者,概述方案动机、快速上手步骤、已验证结果、已知局限,并指向 `wiki/INDEX.md` 获取完整中文叙事)和 `.gitignore`。推送前扫描全仓库确认无真实密钥/邮箱泄漏(`raw/plan-1.md` 里的 token 是占位符 `dummy-or-your-gateway-token`,非真实值)。仓库地址:<https://github.com/AndersHsueh/claude-code-minimax-m3-orchestration>(public)。
+
+## [2026-07-04] deliverable | 通用接入向导 HTML(中/英双语)
+
+用户希望把方案泛化成"接入任意 Anthropic 协议兼容模型"的通用向导,并且要让不懂技术的人和其他 AI Agent 都能直接照做。生成两份自包含 HTML(Anthropic 风格配色与排版):`outputs/connect-any-model_zh.html`、`outputs/connect-any-model_en.html`。内容分两条线:面向人类的用大白话 + 类比解释动机与术语;面向 Agent 的给出精确、带占位符的操作步骤(问 3 个问题 → 生成别名 → 写 settings-{alias}.json → 写可执行脚本 → 验证文本对话与工具调用 → 汇报)。落笔前做了一次实测:确认同时设置 `ANTHROPIC_MODEL` 与三个 `ANTHROPIC_DEFAULT_*_MODEL` 字段不会冲突(用环境变量注入的方式测试,全程未接触真实密钥明文,过程中两次触发了 Claude Code 的密钥泄漏防护拦截,均已安全处理)。涉及主题:[[MiniMax-M3协议兼容与网关]]、[[claude-m3脚本与项目配置]]、[[执行委派规则]]。

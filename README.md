@@ -22,7 +22,24 @@ with `--enable-auto-tool-choice`, or a hand-rolled adapter). **MiniMax ships an 
 Anthropic-compatible endpoint**, so that translation layer is unnecessary here — you point
 `ANTHROPIC_BASE_URL` straight at MiniMax and it just works, including tool calls.
 
+## Prefer a no-code, guided setup?
+
+The steps below are MiniMax-specific and assume you're comfortable editing JSON and shell
+scripts by hand. If you'd rather not — or you want to connect a different Anthropic-protocol-compatible
+provider entirely — there's a self-contained, generalized guide that a non-technical human
+*and* an AI agent can both follow directly:
+
+- [`outputs/connect-any-model_en.html`](./outputs/connect-any-model_en.html) — English
+- [`outputs/connect-any-model_zh.html`](./outputs/connect-any-model_zh.html) — 中文
+
+Hand the file to your AI assistant and say "follow the AI Agent section of this document."
+It will ask you for a **Base URL**, **API Key**, and **Model Name**, then create the settings
+file and the global wrapper script for you — no manual editing required, and it isn't tied to
+MiniMax at all.
+
 ## Quick start
+
+This is the manual, MiniMax-specific version of the same steps.
 
 1. Get a MiniMax API key.
 2. Create `~/.claude/settings-mmx.json`:
@@ -88,7 +105,8 @@ is the schema that governs how.
 - `wiki/` — LLM-maintained knowledge base (topic pages, `INDEX.md`, `log.md`). **Written in
   Chinese** — start at [`wiki/INDEX.md`](./wiki/INDEX.md) for the full narrative, including
   the test transcripts and open questions.
-- `outputs/` — generated deliverables (currently empty)
+- `outputs/` — generated deliverables, including the generalized, non-technical/agent-actionable
+  setup guides (`connect-any-model_en.html`, `connect-any-model_zh.html`)
 - `CLAUDE.md` — the single rule file: both the wiki-maintenance schema and the actual
   execution-delegation rule used to hand work off to `claude-m3`
 
