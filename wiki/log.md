@@ -61,3 +61,7 @@ grep "raw/<文件名>" wiki/log.md
 ## [2026-07-04] lint | 首次自检:摘要/戳/链接密度/断链/orphan
 
 扫描全部 9 个 wiki 文件。摘要覆盖 6/6(INDEX/log 按规则豁免),日期戳覆盖 9/9,链接密度全部 ≥5(最低 6,最高 17)。断链数 0。首次 orphan 扫描发现 `工作流-ingest-query-lint.md` 无 wiki 内 inbound 链接(仅被项目根 `CLAUDE.md` 引用),已在 `INDEX.md` 新增"工具与工作流"分类将其纳入主题清单(INDEX 兜底 inbound),复检后 orphan 数归零。
+
+## [2026-07-04] deliverable | 发布为公开 GitHub 仓库
+
+用户决定把本方案分享给更多人。新增根目录 `README.md`(英文,面向国际读者,概述方案动机、快速上手步骤、已验证结果、已知局限,并指向 `wiki/INDEX.md` 获取完整中文叙事)和 `.gitignore`。推送前扫描全仓库确认无真实密钥/邮箱泄漏(`raw/plan-1.md` 里的 token 是占位符 `dummy-or-your-gateway-token`,非真实值)。仓库地址:<https://github.com/AndersHsueh/claude-code-minimax-m3-orchestration>(public)。
